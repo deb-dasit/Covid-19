@@ -68,6 +68,7 @@ class VolunteerOrder(models.Model):
     '''
     volunteer = models.ForeignKey(User, on_delete=models.CASCADE)
     order = models.ForeignKey(UserOrder, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now=True)
 
 
 class Feedback(models.Model):

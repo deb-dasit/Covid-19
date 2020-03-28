@@ -24,6 +24,7 @@ class VolunteerShops(models.Model):
     '''
     volunteer = models.ForeignKey(User, on_delete=models.CASCADE)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now=True)
 
 
 class Items(models.Model):

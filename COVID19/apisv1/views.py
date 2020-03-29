@@ -69,6 +69,16 @@ class SignupView(View):
             group = Group.objects.get(name=request.POST.get('role'))
             group.user_set.add(user)
             token = self.create_token(request, user)
+            if(request.POST.get('role') == 'shopkeeper'):
+                shop = Shop()
+                shop.name = request.POST.get('shop_name')
+                shop.address= request.POST.get('address')
+                shop.locality= request.POST.get('locality')
+                shop.city= request.POST.get('city')
+                shop.state= request.POST.get('state')
+                shop.pin= request.POST.get('pincode')
+                shop.owner= user
+                shop.save()
             return JsonResponse({'status': 200, 'msg': 'Registered successfully', 'access_token': token.access_token, 'refresh_token': token.refresh_token})
         except ObjectDoesNotExist:
             return JsonResponse({'status': 200, 'msg': 'Role doesn\'t exists'})
@@ -114,6 +124,7 @@ class ShopsView(View):
         token = verify_token(request)
         if isinstance(token, AccessToken):
             shops = Shop.objects.all().values().order_by('name')
+            print(list(shops))
             return JsonResponse({'status': 200, 'shops': list(shops)})
         return JsonResponse({'status': 403, 'msg': token['msg']})
 

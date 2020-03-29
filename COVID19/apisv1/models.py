@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+import datetime
+
 # Create your models here.
 
 
@@ -15,6 +17,7 @@ class Shop(models.Model):
     locality = models.CharField(max_length=100)
     address = models.TextField()
     pin = models.CharField(max_length=6)
+    status = models.BooleanField(default=1)
     timestamp = models.DateTimeField(auto_now=True)
 
 
@@ -81,5 +84,12 @@ class Feedback(models.Model):
     order = models.ForeignKey(UserOrder, on_delete=models.CASCADE)
     feedback = models.TextField()
     timestamp = models.DateTimeField(auto_now=True)
+
+
+class AccessToken(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    access_token = models.TextField()
+    refresh_token = models.CharField(max_length=255)
+    expire_date = models.DateTimeField(default=datetime.datetime.now())
 
 

@@ -21,6 +21,7 @@ class Shop(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
 
 
+
 class VolunteerShops(models.Model):
     '''
     Map between Volunteer and shop(s)

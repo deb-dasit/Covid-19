@@ -31,12 +31,14 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'apisv1'
 ]
 
 MIDDLEWARE = [
@@ -68,6 +70,14 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'COVID19.wsgi.application'
+
+ASGI_APPLICATION = 'COVID19.routing.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
 
 
 # Database

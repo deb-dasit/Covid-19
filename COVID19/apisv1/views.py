@@ -11,6 +11,7 @@ from .models import *
 import datetime
 import base64
 import hashlib
+import json
 
 # Create your views here.
 
@@ -28,6 +29,7 @@ def verify_token(request):
             return {'msg': 'Token expires'}
         access_token.expire_date = datetime.datetime.now() + datetime.timedelta(hours=10)
         access_token.save()
+        request.user = access_token.user
         return access_token
     except ObjectDoesNotExist:
         return {'msg': 'Invalid Token'}
@@ -116,5 +118,70 @@ class ShopsView(View):
         return JsonResponse({'status': 403, 'msg': token['msg']})
 
 
-def user_list(request):
-    return JsonResponse({'ggg':'lllll'})
+class UpdateStatus(View):
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(UpdateStatus, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        token = verify_token(request)
+        status = request.POST.get('status')
+        st = False
+        if status.lower() == 'open':
+            st = True
+        try:
+            shop = Shop.objects.get(owner=request.user, id=request.POST.get('shop_id'))
+            shop.status = st
+            shop.save()
+            send_job_notification(shop.status, shop.id)
+            return JsonResponse({'status': 200, 'msg': 'Updated successfully'})
+        except Exception as e:
+            print(e)
+            return JsonResponse({'status': 403, 'msg': 'Invalid request'})
+
+from channels.layers import get_channel_layer
+
+def send_job_notification(message, job_id):
+    print(message)
+    channel_layer = get_channel_layer()
+    group_name = 'job_{0}'.format(job_id)
+    channel_layer.group_send(
+    group_name,
+    {
+        "type": "websocket.send",
+        "message": message,
+    })
+
+def send_notification(request):
+    return render(request, 'user_list.html')
+
+
+class AddListView(View):
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(AddListView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        token = verify_token(request)
+        print(request.POST)
+        try:
+            store = Shop.objects.get(pk=request.POST.get('store_id'))
+            cart_items = json.loads(request.POST.getlist('cart')[0])
+            # print(json.loads(cart_items[0]))
+            order = UserOrder(
+                user=request.user,
+                store=store,
+                acceptance_type=request.POST.get('store_acceptance_type'),
+                user_finalised=True if request.POST.get('store_acceptance_type')=='confirm_first' else False
+            )
+            order.save()
+            for i in cart_items:
+                itm = Items(
+                    item=i['item'],
+                    quantity=i['quantity']
+                )
+                itm.save()
+                item_order_map = ItemOrderMap.objects.create(order=order, item=itm)
+            return JsonResponse({'status': 200, 'msg': 'Sent to store'})
+        except ObjectDoesNotExist:
+            return JsonResponse({'status': 403, 'msg': 'Invalid store'})

@@ -56,12 +56,14 @@ class SignupView(View):
         return super(SignupView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        print(request.POST)
         data = {
             'username': request.POST.get('email'),
             'email': request.POST.get('email'),
             'first_name': request.POST.get('name'),
             'password': request.POST.get('password')
         }
+        print(data)
         user = User.objects.create_user(**data)
         try:
             group = Group.objects.get(name=request.POST.get('role'))

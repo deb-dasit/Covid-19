@@ -21,6 +21,7 @@ class Shop(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
 
 
+
 class VolunteerShops(models.Model):
     '''
     Map between Volunteer and shop(s)
@@ -47,12 +48,18 @@ class UserOrder(models.Model):
     '''
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     store = models.ForeignKey(Shop, on_delete=models.CASCADE)
-    item_list = models.ForeignKey(Items, on_delete=models.CASCADE)
     order_status = models.IntegerField(default=0)
     acceptance_type = models.CharField(max_length=25)
-    order_item_status = models.BooleanField(default=0)
     user_finalised = models.BooleanField(default=0)
     timestamp = models.DateTimeField(auto_now=True)
+
+
+class ItemOrderMap(models.Model):
+    '''
+    Map between order and cart list
+    '''
+    order = models.ForeignKey(UserOrder, on_delete=models.CASCADE)
+    item = models.ForeignKey(Items, on_delete=models.CASCADE)
 
 
 class ItemComments(models.Model):

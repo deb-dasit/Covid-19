@@ -8,5 +8,6 @@ urlpatterns = [
     path('login', LoginView.as_view(), name='loginView'),
     path('shops', ShopsView.as_view(), name='shopsView'),
     path('updateStatus', UpdateStatus.as_view(), name='updateStatus'),
-    path('addList', AddListView.as_view(), name='addListView')
+    path('addList', AddListView.as_view(), name='addListView'),
+    path('allOrders', AllOrders.as_view(), name='allOrders'),
 ]

@@ -200,3 +200,40 @@ class AddListView(View):
             return JsonResponse({'status': 200, 'msg': 'Sent to store'})
         except ObjectDoesNotExist:
             return JsonResponse({'status': 403, 'msg': 'Invalid store'})
+
+
+class AllOrders(View):
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(AllOrders, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        token = verify_token(request)
+        shops = Shop.objects.filter(owner=request.user)
+        if not shops:
+            return JsonResponse({'status': 200, 'msg': 'No shop(s) regirstered'})
+        orders = UserOrder.objects.filter(store__in=shops).select_related('store').order_by('-timestamp')
+        order_list = []
+        for i in orders:
+            cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
+            tmp = {
+                'user': i.user.first_name,
+                'shop': [
+                    {
+                        'name': i.store.name,
+                        'owner': i.store.owner.first_name,
+                        'state': i.store.state,
+                        'city': i.store.city,
+                        'locality': i.store.locality,
+                        'address': i.store.address,
+                        'pin': i.store.pin
+                    }
+                ],
+                'items': list(cart_items),
+                'order_status': 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Reject',
+                'acceptance_type': 'availability',
+                'user_finalised': True,
+                'timestamp': i.timestamp.strftime('%d/%m/%Y %H:%M:%S')
+            }
+            order_list.append(tmp)
+        return JsonResponse({'status': 200, 'data': order_list})

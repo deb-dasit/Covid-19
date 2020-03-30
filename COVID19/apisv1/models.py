@@ -50,7 +50,6 @@ class UserOrder(models.Model):
     store = models.ForeignKey(Shop, on_delete=models.CASCADE)
     order_status = models.IntegerField(default=0)
     acceptance_type = models.CharField(max_length=25)
-    order_item_status = models.BooleanField(default=0)
     user_finalised = models.BooleanField(default=0)
     timestamp = models.DateTimeField(auto_now=True)
 

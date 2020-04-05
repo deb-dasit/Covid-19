@@ -61,14 +61,12 @@ class SignupView(View):
         return super(SignupView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        print(request.POST)
         data = {
             'username': request.POST.get('email'),
             'email': request.POST.get('email'),
             'first_name': request.POST.get('name'),
             'password': request.POST.get('password')
         }
-        print(data)
         user = User.objects.create_user(**data)
         try:
             group = Group.objects.get(name=request.POST.get('role'))
@@ -141,6 +139,8 @@ class UpdateStatus(View):
 
     def post(self, request, *args, **kwargs):
         token = verify_token(request)
+        if not isinstance(token, AccessToken):
+            return JsonResponse({'status': 403, 'msg': token['msg']})
         status = request.POST.get('status')
         st = False
         if status.lower() == 'open':
@@ -159,7 +159,6 @@ from channels.layers import get_channel_layer
 
 
 def send_job_notification(message, job_id):
-    print(message)
     channel_layer = get_channel_layer()
     group_name = 'job_{0}'.format(job_id)
     channel_layer.group_send(
@@ -181,7 +180,8 @@ class AddListView(View):
 
     def post(self, request, *args, **kwargs):
         token = verify_token(request)
-        print(request.POST)
+        if not isinstance(token, AccessToken):
+            return JsonResponse({'status': 403, 'msg': token['msg']})
         try:
             store = Shop.objects.get(pk=request.POST.get('store_id'))
             cart_items = json.loads(request.POST.getlist('cart')[0])
@@ -211,6 +211,8 @@ class AllOrders(View):
 
     def get(self, request, *args, **kwargs):
         token = verify_token(request)
+        if not isinstance(token, AccessToken):
+            return JsonResponse({'status': 403, 'msg': token['msg']})
         shops = Shop.objects.filter(owner=request.user)
         if not shops:
             return JsonResponse({'status': 200, 'msg': 'No shop(s) regirstered'})
@@ -233,6 +235,86 @@ class AllOrders(View):
                 ],
                 'items': list(cart_items),
                 'order_status': 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Reject',
+                'acceptance_type': 'availability',
+                'user_finalised': True,
+                'timestamp': i.timestamp.strftime('%d/%m/%Y %H:%M:%S')
+            }
+            order_list.append(tmp)
+        return JsonResponse({'status': 200, 'data': order_list})
+
+
+class ActiveOrders(View):
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(ActiveOrders, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        token = verify_token(request)
+        if not isinstance(token, AccessToken):
+            return JsonResponse({'status': 403, 'msg': token['msg']})
+        shops = Shop.objects.filter(owner=request.user)
+        if not shops:
+            return JsonResponse({'status': 200, 'msg': 'No shop(s) regirstered'})
+        orders = UserOrder.objects.filter(store__in=shops, order_status=1).select_related('store').order_by('-timestamp')
+        order_list = []
+        for i in orders:
+            cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(
+                item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
+            tmp = {
+                'user': i.user.first_name,
+                'shop': [
+                    {
+                        'name': i.store.name,
+                        'owner': i.store.owner.first_name,
+                        'state': i.store.state,
+                        'city': i.store.city,
+                        'locality': i.store.locality,
+                        'address': i.store.address,
+                        'pin': i.store.pin
+                    }
+                ],
+                'items': list(cart_items),
+                'order_status': 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Reject',
+                'acceptance_type': 'availability',
+                'user_finalised': True,
+                'timestamp': i.timestamp.strftime('%d/%m/%Y %H:%M:%S')
+            }
+            order_list.append(tmp)
+        return JsonResponse({'status': 200, 'data': order_list})
+
+
+class PastOrders(View):
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(PastOrders, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        token = verify_token(request)
+        if not isinstance(token, AccessToken):
+            return JsonResponse({'status': 403, 'msg': token['msg']})
+        shops = Shop.objects.filter(owner=request.user)
+        if not shops:
+            return JsonResponse({'status': 200, 'msg': 'No shop(s) regirstered'})
+        orders = UserOrder.objects.filter(store__in=shops, order_status__in=[2, 5]).select_related('store').order_by('-timestamp')
+        order_list = []
+        for i in orders:
+            cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(
+                item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
+            tmp = {
+                'user': i.user.first_name,
+                'shop': [
+                    {
+                        'name': i.store.name,
+                        'owner': i.store.owner.first_name,
+                        'state': i.store.state,
+                        'city': i.store.city,
+                        'locality': i.store.locality,
+                        'address': i.store.address,
+                        'pin': i.store.pin
+                    }
+                ],
+                'items': list(cart_items),
+                'order_status': 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Done' if i.order_status == 5 else 'Reject',
                 'acceptance_type': 'availability',
                 'user_finalised': True,
                 'timestamp': i.timestamp.strftime('%d/%m/%Y %H:%M:%S')

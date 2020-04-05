@@ -45,6 +45,7 @@ class UserOrder(models.Model):
     Order_status: 0: hold
                   1: confirm
                   2: reject
+                  5: done
     '''
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     store = models.ForeignKey(Shop, on_delete=models.CASCADE)

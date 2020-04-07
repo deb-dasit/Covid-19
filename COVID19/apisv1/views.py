@@ -49,7 +49,7 @@ def get_token_data(request, user):
 
 def get_token(request):
     try:
-        token = AccessToken.objects.get(user=request.user)
+        token = AccessToken.objects.get(user=request.user).last()
         return token
     except ObjectDoesNotExist:
         return None

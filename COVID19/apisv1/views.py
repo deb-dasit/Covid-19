@@ -72,7 +72,7 @@ class SignupView(View):
             group = Group.objects.get(name=request.POST.get('role'))
             group.user_set.add(user)
             token = self.create_token(request, user)
-            if request.POST.get('role') == 'shopkeeper':
+            if request.POST.get('role').lower() == 'shop':
                 shop = Shop()
                 shop.name = request.POST.get('shop_name')
                 shop.address = request.POST.get('address')
@@ -90,6 +90,7 @@ class SignupView(View):
     def create_token(self, request, user):
         token_data = get_token_data(request, user)
         access_token = AccessToken(**token_data)
+        access_token.save()
         return access_token
 
 

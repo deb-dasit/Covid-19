@@ -50,7 +50,7 @@ def get_token_data(request, user):
 
 def get_token(request):
     try:
-        token = AccessToken.objects.get(user=request.user).last()
+        token = AccessToken.objects.filter(user=request.user).last()
         return token
     except ObjectDoesNotExist:
         return None
@@ -116,8 +116,7 @@ class LoginView(View):
             if user.is_active:
                 login(request, user)
                 request.user = user
-
-                AccessToken.objects.update_or_create(get_token_data(request, user))
+                AccessToken.objects.update_or_create(**get_token_data(request, user))
                 return True
         return False
 

@@ -44,6 +44,7 @@ def get_token_data(request, user):
         'refresh_token': hashlib.sha256((user.email + str(datetime.datetime.now())).encode()).hexdigest(),
         'expire_date': datetime.datetime.now() + datetime.timedelta(hours=10)
     }
+    print(token_data)
     return token_data
 
 
@@ -115,6 +116,7 @@ class LoginView(View):
             if user.is_active:
                 login(request, user)
                 request.user = user
+
                 AccessToken.objects.update_or_create(get_token_data(request, user))
                 return True
         return False

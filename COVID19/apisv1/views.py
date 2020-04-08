@@ -45,7 +45,6 @@ def get_token_data(request, user):
         'refresh_token': hashlib.sha256((user.email + str(datetime.datetime.now())).encode()).hexdigest(),
         'expire_date': datetime.datetime.now() + datetime.timedelta(hours=10)
     }
-    print(token_data)
     return token_data
 
 

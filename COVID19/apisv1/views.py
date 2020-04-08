@@ -41,7 +41,6 @@ def verify_token(request):
 def get_token_data(request, user):
     token_data = {
         'user': user,
-        'role': user.groups.all()[0].name,
         'access_token': base64.b64encode((user.password + str(datetime.datetime.now())).encode()).decode(),
         'refresh_token': hashlib.sha256((user.email + str(datetime.datetime.now())).encode()).hexdigest(),
         'expire_date': datetime.datetime.now() + datetime.timedelta(hours=10)
@@ -89,7 +88,7 @@ class SignupView(View):
                 shop.owner = user
                 shop.save()
             return JsonResponse({'status': 200, 'msg': 'Registered successfully', 'access_token': token.access_token,
-                                 'refresh_token': token.refresh_token})
+                                 'refresh_token': token.refresh_token, 'role': token.user.groups.all()[0].name})
         except ObjectDoesNotExist:
             return JsonResponse({'status': 200, 'msg': 'Role doesn\'t exists'})
 
@@ -109,7 +108,7 @@ class LoginView(View):
         if self.do_login(request):
             token = get_token(request)
             return JsonResponse({'status': 200, 'msg': 'Login success', 'access_token': token.access_token,
-                                 'refresh_token': token.refresh_token})
+                                 'refresh_token': token.refresh_token, 'role': token.user.groups.all()[0].name})
         else:
             return JsonResponse({'status': 200, 'msg': 'Something went wrong. Try again.'})
 

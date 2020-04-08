@@ -7,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import authenticate, login, logout
 from django.utils import timezone
 from django.db.models import F
+from django.db.utils import IntegrityError
 from .models import *
 
 import datetime
@@ -68,7 +69,11 @@ class SignupView(View):
             'first_name': request.POST.get('name'),
             'password': request.POST.get('password')
         }
-        user = User.objects.create_user(**data)
+        try:
+            user = User.objects.create_user(**data)
+        except IntegrityError:
+            return JsonResponse({'status': 403, 'msg': 'Username already exists'})
+
         try:
             group = Group.objects.get(name=request.POST.get('role'))
             group.user_set.add(user)

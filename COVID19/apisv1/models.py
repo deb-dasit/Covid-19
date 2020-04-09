@@ -77,9 +77,12 @@ class ItemComments(models.Model):
 class VolunteerOrder(models.Model):
     '''
     Map between Volunteer and Order
+    status: 0 - on process
+            1 - delivered
     '''
     volunteer = models.ForeignKey(User, on_delete=models.CASCADE)
     order = models.ForeignKey(UserOrder, on_delete=models.CASCADE)
+    status = models.IntegerField(default=0)
     timestamp = models.DateTimeField(auto_now=True)
 
 

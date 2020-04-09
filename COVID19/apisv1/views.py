@@ -222,10 +222,16 @@ class AllOrders(View):
         token = verify_token(request)
         if not isinstance(token, AccessToken):
             return JsonResponse({'status': 403, 'msg': token['msg']})
-        shops = Shop.objects.filter(owner=request.user)
-        if not shops:
-            return JsonResponse({'status': 200, 'msg': 'No shop(s) regirstered'})
-        orders = UserOrder.objects.filter(store__in=shops).select_related('store').order_by('-timestamp')
+        if request.user.groups.all()[0].id == 1:
+            shops = Shop.objects.filter(owner=request.user)
+            if not shops:
+                return JsonResponse({'status': 200, 'msg': 'No shop(s) regirstered'})
+            orders = UserOrder.objects.filter(store__in=shops).select_related('store').order_by('-timestamp')
+        elif request.user.groups.all()[0].id == 3:
+            orders = UserOrder.objects.filter(user=request.user).select_related('store').order_by('-timestamp')
+        else:
+            v_orders = VolunteerOrder.objects.filter(volunteer=request.user).values('order')
+            orders = UserOrder.objects.filter(pk__in=v_orders)
         order_list = []
         for i in orders:
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
@@ -269,6 +275,9 @@ class ActiveOrders(View):
         elif request.user.groups.all()[0].id == 3:
             orders = UserOrder.objects.filter(user=request.user, order_status=1).select_related('store').order_by(
                 '-timestamp')
+        else:
+            v_orders = VolunteerOrder.objects.filter(volunteer=request.user, status=0).values('order')
+            orders = UserOrder.objects.filter(pk__in=v_orders)
         order_list = []
         for i in orders:
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(
@@ -305,10 +314,16 @@ class PastOrders(View):
         token = verify_token(request)
         if not isinstance(token, AccessToken):
             return JsonResponse({'status': 403, 'msg': token['msg']})
-        shops = Shop.objects.filter(owner=request.user)
-        if not shops:
-            return JsonResponse({'status': 200, 'msg': 'No shop(s) regirstered'})
-        orders = UserOrder.objects.filter(store__in=shops, order_status__in=[2, 5]).select_related('store').order_by('-timestamp')
+        if request.user.groups.all()[0].id == 1:
+            shops = Shop.objects.filter(owner=request.user)
+            if not shops:
+                return JsonResponse({'status': 200, 'msg': 'No shop(s) regirstered'})
+            orders = UserOrder.objects.filter(store__in=shops, order_status__in=[2, 5]).select_related('store').order_by('-timestamp')
+        elif request.user.groups.all()[0].id == 3:
+            orders = UserOrder.objects.filter(user=request.user, order_status__in=[2, 5]).select_related('store').order_by('-timestamp')
+        else:
+            v_orders = VolunteerOrder.objects.filter(volunteer=request.user, status=1).values('order')
+            orders = UserOrder.objects.filter(pk__in=v_orders)
         order_list = []
         for i in orders:
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(

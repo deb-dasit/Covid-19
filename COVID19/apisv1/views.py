@@ -133,7 +133,10 @@ class ShopsView(View):
     def get(self, request, *args, **kwargs):
         token = verify_token(request)
         if isinstance(token, AccessToken):
-            shops = Shop.objects.filter(owner=request.user).annotate(owner_name=F('owner__first_name')).values().order_by('name')
+            if request.user.groups.all()[0].id == 1:
+                shops = Shop.objects.filter(owner=request.user).annotate(owner_name=F('owner__first_name')).values().order_by('name')
+            else:
+                shops = Shop.objects.all().annotate(owner_name=F('owner__first_name')).values().order_by('name')
             return JsonResponse({'status': 200, 'shops': list(shops)})
         return JsonResponse({'status': 403, 'msg': token['msg']})
 

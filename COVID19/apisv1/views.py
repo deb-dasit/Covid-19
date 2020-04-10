@@ -271,7 +271,7 @@ class ActiveOrders(View):
             shops = Shop.objects.filter(owner=request.user)
             if not shops:
                 return JsonResponse({'status': 200, 'msg': 'No shop(s) regirstered'})
-            orders = UserOrder.objects.filter(store__in=shops, order_status=1).select_related('store').order_by('-timestamp')
+            orders = UserOrder.objects.filter(store__in=shops, order_status__in=[0, 1]).select_related('store').order_by('-timestamp')
         elif request.user.groups.all()[0].id == 3:
             orders = UserOrder.objects.filter(user=request.user, order_status=1).select_related('store').order_by(
                 '-timestamp')

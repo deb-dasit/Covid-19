@@ -266,6 +266,7 @@ class AllOrders(View):
                 'user': i.user.first_name,
                 'shop': [
                     {
+                        'store_id': i.store.id,
                         'name': i.store.name,
                         'owner': i.store.owner.first_name,
                         'state': i.store.state,
@@ -314,6 +315,7 @@ class ActiveOrders(View):
                 'user': i.user.first_name,
                 'shop': [
                     {
+                        'store_id': i.store.id,
                         'name': i.store.name,
                         'owner': i.store.owner.first_name,
                         'state': i.store.state,
@@ -361,6 +363,7 @@ class PastOrders(View):
                 'user': i.user.first_name,
                 'shop': [
                     {
+                        'store_id': i.store.id,
                         'name': i.store.name,
                         'owner': i.store.owner.first_name,
                         'state': i.store.state,
@@ -436,6 +439,7 @@ class AvailableOrders(View):
                 'user': i.user.first_name,
                 'shop': [
                     {
+                        'store_id': i.store.id,
                         'name': i.store.name,
                         'owner': i.store.owner.first_name,
                         'state': i.store.state,

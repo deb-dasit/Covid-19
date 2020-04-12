@@ -569,7 +569,7 @@ class Profile(View):
             UserDetails['address'] = user_details.address
         except ObjectDoesNotExist:
             pass
+        UserDetails['role'] = token.user.groups.all()[0].name
         profile_data['user_details'] = userDetails
-        profile_data['role'] = token.user.groups.all()[0].name
         profile_data['shops'] = shops
         return JsonResponse({'status': 200, 'data': profile_data})

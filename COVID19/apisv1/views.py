@@ -89,8 +89,8 @@ class SignupView(View):
                 shop.save()
             elif request.POST.get('role').lower() == 'user':
                 user_det = UserDetails(
-                    user = user,
-                    address = request.POST.get('address')
+                    user=user,
+                    address=request.POST.get('address')
                 )
                 user_det.save()
             return JsonResponse({'status': 200, 'msg': 'Registered successfully', 'access_token': token.access_token,
@@ -499,3 +499,23 @@ class CompleteOrder(View):
             return JsonResponse({'status': 200, 'msg': 'Order delivered successfully'})
         except ObjectDoesNotExist:
             return JsonResponse({'status': 200, 'msg': 'Order delivered or invalid'})
+
+
+class AddVolunteerToShop(View):
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(AddVolunteerToShop, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        token = verify_token(request)
+        if not isinstance(token, AccessToken):
+            return JsonResponse({'status': 403, 'msg': token['msg']})
+        if request.user.groups.all()[0].id != 2:
+            return JsonResponse({'status': 403, 'msg': 'Not authorized'})
+        shops = json.loads(request.POST.get('shops'))
+        for i in shops:
+            created, volunteer_shop = VolunteerShops.objects.get_or_create(
+                volunteer=request.user,
+                shop=Shop.objects.get(pk=i)
+            )
+        return JsonResponse({'status': 200, 'msg': 'Shop(s) mapped successfully'})

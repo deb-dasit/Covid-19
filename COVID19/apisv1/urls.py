@@ -17,4 +17,5 @@ urlpatterns = [
     path('availableOrders', AvailableOrders.as_view(), name='availableOrders'),
     path('acceptOrders',AcceptOrders.as_view(), name='acceptOrders'),
     path('completeOrder', CompleteOrder.as_view(), name='completeOrder'),
+    path('addVolunteerToShop', AddVolunteerToShop.as_view(), name='addVolunteerToShop')
 ]

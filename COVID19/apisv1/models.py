@@ -98,6 +98,9 @@ class Feedback(models.Model):
 
 
 class AccessToken(models.Model):
+    '''
+    Class for storing the access_token, expiry_date, refresh_token of a user
+    '''
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     access_token = models.TextField()
     refresh_token = models.CharField(max_length=255)
@@ -105,6 +108,9 @@ class AccessToken(models.Model):
 
 
 class UserDetails(models.Model):
+    '''
+    Class to store the address of a user of type User
+    '''
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     address = models.TextField()
 

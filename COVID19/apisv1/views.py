@@ -264,7 +264,7 @@ class AllOrders(View):
             tmp = {
                 'id': i.id,
                 'user': i.user.first_name,
-                'user_address': UserDetails.objects.get(user=i.user).address,
+                'user_address': UserDetails.objects.get(user=i.user).address if UserDetails.objects.get(user=i.user) else None,
                 'shop': [
                     {
                         'store_id': i.store.id,
@@ -314,7 +314,7 @@ class ActiveOrders(View):
             tmp = {
                 'id': i.id,
                 'user': i.user.first_name,
-                'user_address': UserDetails.objects.get(user=i.user).address,
+                'user_address': UserDetails.objects.get(user=i.user).address if UserDetails.objects.get(user=i.user) else None,
                 'shop': [
                     {
                         'store_id': i.store.id,
@@ -363,7 +363,7 @@ class PastOrders(View):
             tmp = {
                 'id': i.id,
                 'user': i.user.first_name,
-                'user_address': UserDetails.objects.get(user=i.user).address,
+                'user_address': UserDetails.objects.get(user=i.user).address if UserDetails.objects.get(user=i.user) else None,
                 'shop': [
                     {
                         'store_id': i.store.id,
@@ -440,7 +440,7 @@ class AvailableOrders(View):
             tmp = {
                 'id': i.id,
                 'user': i.user.first_name,
-                'user_address': UserDetails.objects.get(user=i.user).address,
+                'user_address': UserDetails.objects.get(user=i.user).address if UserDetails.objects.get(user=i.user) else None,
                 'shop': [
                     {
                         'store_id': i.store.id,

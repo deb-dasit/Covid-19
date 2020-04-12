@@ -266,6 +266,12 @@ class AllOrders(View):
                 user_address = user_details.address
             except ObjectDoesNotExist:
                 pass
+            order_status = 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Reject' if i.order_status == 2 else 'Done'
+            try:
+                vol_order = VolunteerOrder.objects.get(order=i)
+                order_status = 'Out for delivery' if vol_order.status == 0 else 'Delivered'
+            except ObjectDoesNotExist:
+                pass
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
             tmp = {
                 'id': i.id,
@@ -284,7 +290,7 @@ class AllOrders(View):
                     }
                 ],
                 'items': list(cart_items),
-                'order_status': 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Reject' if i.order_status == 2 else 'Done',
+                'order_status': order_status,
                 'acceptance_type': 'availability',
                 'user_finalised': True,
                 'timestamp': i.timestamp.strftime('%d/%m/%Y %H:%M:%S')
@@ -321,6 +327,12 @@ class ActiveOrders(View):
                 user_address = user_details.address
             except ObjectDoesNotExist:
                 pass
+            order_status = 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Reject' if i.order_status == 2 else 'Done'
+            try:
+                vol_order = VolunteerOrder.objects.get(order=i)
+                order_status = 'Out for delivery' if vol_order.status == 0 else 'Delivered'
+            except ObjectDoesNotExist:
+                pass
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(
                 item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
             tmp = {
@@ -340,7 +352,7 @@ class ActiveOrders(View):
                     }
                 ],
                 'items': list(cart_items),
-                'order_status': 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Reject' if i.order_status == 2 else 'Done',
+                'order_status': order_status,
                 'acceptance_type': 'availability',
                 'user_finalised': True,
                 'timestamp': i.timestamp.strftime('%d/%m/%Y %H:%M:%S')
@@ -376,6 +388,12 @@ class PastOrders(View):
                 user_address = user_details.address
             except ObjectDoesNotExist:
                 pass
+            order_status = 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Done' if i.order_status == 5 else 'Reject'
+            try:
+                vol_order = VolunteerOrder.objects.get(order=i)
+                order_status = 'Out for delivery' if vol_order.status == 0 else 'Delivered'
+            except ObjectDoesNotExist:
+                pass
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(
                 item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
             tmp = {
@@ -395,7 +413,7 @@ class PastOrders(View):
                     }
                 ],
                 'items': list(cart_items),
-                'order_status': 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Done' if i.order_status == 5 else 'Reject',
+                'order_status': order_status,
                 'acceptance_type': 'availability',
                 'user_finalised': True,
                 'timestamp': i.timestamp.strftime('%d/%m/%Y %H:%M:%S')
@@ -459,6 +477,7 @@ class AvailableOrders(View):
                 user_address = user_details.address
             except ObjectDoesNotExist:
                 pass
+            order_status = 'Out for delivery' if i.status == 0 else 'Delivered'
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(
                 item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
             tmp = {
@@ -478,7 +497,7 @@ class AvailableOrders(View):
                     }
                 ],
                 'items': list(cart_items),
-                'order_status': 'Packed',
+                'order_status': order_status,
                 'acceptance_type': 'availability',
                 'user_finalised': True,
                 'timestamp': i.timestamp.strftime('%d/%m/%Y %H:%M:%S')

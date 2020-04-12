@@ -104,7 +104,7 @@ class AccessToken(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     access_token = models.TextField()
     refresh_token = models.CharField(max_length=255)
-    expire_date = models.DateTimeField(default=datetime.datetime.now())
+    expire_date = models.DateTimeField(default='django.utils.timezone.now')
 
 
 class UserDetails(models.Model):

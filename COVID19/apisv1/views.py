@@ -535,7 +535,7 @@ class Profile(View):
         if not isinstance(token, AccessToken):
             return JsonResponse({'status': 403, 'msg': token['msg']})
         shops = []
-        userDetails = {'name': token.user.first_name + ' ' + token.user.last_name}
+        userDetails = {'name': token.user.first_name + ' ' + token.user.last_name, 'role': token.user.groups.all()[0].name}
         profile_data = {}
         if request.user.groups.all()[0].id == 1:
             shop_list = Shop.objects.filter(owner=request.user)
@@ -569,7 +569,6 @@ class Profile(View):
             UserDetails['address'] = user_details.address
         except ObjectDoesNotExist:
             pass
-        UserDetails['role'] = token.user.groups.all()[0].name
         profile_data['user_details'] = userDetails
         profile_data['shops'] = shops
         return JsonResponse({'status': 200, 'data': profile_data})

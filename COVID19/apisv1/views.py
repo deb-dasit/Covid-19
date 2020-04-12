@@ -594,7 +594,7 @@ class Profile(View):
         try:
             user_details = UserDetails.objects.get(user=request.user)
             userDetails['contact'] = user_details.contact
-            UserDetails['address'] = user_details.address
+            userDetails['address'] = user_details.address
         except ObjectDoesNotExist:
             pass
         profile_data['user_details'] = userDetails

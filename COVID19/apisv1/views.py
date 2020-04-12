@@ -41,7 +41,7 @@ def verify_token(request):
 def get_token_data(request, user):
     token_data = {
         'user': user,
-        'access_token': base64.b64encode((user.password + str(datetime.datetime.now())).encode()).decode(),
+        'access_token': base64.b64encode(hashlib.sha3_256((user.password + str(datetime.datetime.now())).encode()).hexdigest().encode()).decode(),
         'refresh_token': hashlib.sha256((user.email + str(datetime.datetime.now())).encode()).hexdigest(),
         'expire_date': datetime.datetime.now() + datetime.timedelta(hours=10)
     }
@@ -523,3 +523,56 @@ class AddVolunteerToShop(View):
                 shop=Shop.objects.get(pk=i)
             )
         return JsonResponse({'status': 200, 'msg': 'Shop(s) mapped successfully'})
+
+
+class Profile(View):
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(Profile, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        token = verify_token(request)
+        if not isinstance(token, AccessToken):
+            return JsonResponse({'status': 403, 'msg': token['msg']})
+        shops = []
+        userDetails = []
+        profile_data = {}
+        if request.user.groups.all()[0].id == 1:
+            shop_list = Shop.objects.filter(owner=request.user)
+            for i in shop_list:
+                tmp = {
+                    'store_id': i.id,
+                    'name': i.name,
+                    'state': i.state,
+                    'city': i.city,
+                    'locality': i.locality,
+                    'address': i.address,
+                    'pin': i.pin
+                }
+                shops.append(tmp)
+        elif request.user.groups.all()[0].id == 2:
+            shop_list = VolunteerShops.objects.filter(volunteer=request.user).select_related('shop')
+            for i in shop_list:
+                tmp = {
+                    'store_id': i.shop.id,
+                    'name': i.shop.name,
+                    'state': i.shop.state,
+                    'city': i.shop.city,
+                    'locality': i.shop.locality,
+                    'address': i.shop.address,
+                    'pin': i.shop.pin
+                }
+                shops.append(tmp)
+        try:
+            user_details = UserDetails.objects.get(user=request.user)
+            userDetails = {
+                'name': token.user.first_name + ' ' + token.user.last_name,
+                'contact': user_details.contact,
+                'address': user_details.address
+            }
+        except ObjectDoesNotExist:
+            pass
+        profile_data['user_details'] = userDetails
+        profile_data['role'] = token.user.groups.all()[0].name
+        profile_data['shops'] = shops
+        return JsonResponse({'status': 200, 'data': profile_data})

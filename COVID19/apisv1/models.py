@@ -113,5 +113,6 @@ class UserDetails(models.Model):
     '''
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     address = models.TextField()
+    contact = models.CharField(max_length=10, default='XXXXXX')
 
 

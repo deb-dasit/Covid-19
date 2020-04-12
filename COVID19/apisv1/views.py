@@ -600,3 +600,23 @@ class Profile(View):
         profile_data['user_details'] = userDetails
         profile_data['shops'] = shops
         return JsonResponse({'status': 200, 'data': profile_data})
+
+
+class UpdateProfile(View):
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(UpdateProfile, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        token = verify_token(request)
+        if not isinstance(token, AccessToken):
+            return JsonResponse({'status': 403, 'msg': token['msg']})
+        updated, obj = UserDetails.objects.update_or_create(
+            user=request.user,
+            address=request.POST.get('address'),
+            contact=request.POST.get('contact')
+        )
+        msg = 'Profile added successfully'
+        if updated:
+            msg = 'Profile updated successfully'
+        return JsonResponse({'status': 200, 'msg': msg})

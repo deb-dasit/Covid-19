@@ -87,6 +87,12 @@ class SignupView(View):
                 shop.pin = request.POST.get('pincode')
                 shop.owner = user
                 shop.save()
+            elif request.POST.get('role').lower() == 'user':
+                user_det = UserDetails(
+                    user = user,
+                    address = request.POST.get('address')
+                )
+                user_det.save()
             return JsonResponse({'status': 200, 'msg': 'Registered successfully', 'access_token': token.access_token,
                                  'refresh_token': token.refresh_token, 'role': token.user.groups.all()[0].name})
         except ObjectDoesNotExist:
@@ -110,7 +116,7 @@ class LoginView(View):
             return JsonResponse({'status': 200, 'msg': 'Login success', 'access_token': token.access_token,
                                  'refresh_token': token.refresh_token, 'role': token.user.groups.all()[0].name})
         else:
-            return JsonResponse({'status': 200, 'msg': 'Something went wrong. Try again.'})
+            return JsonResponse({'status': 200, 'msg': 'Username or password invalid. Try again.'})
 
     def do_login(self, request, token=None):
         username = request.POST.get('username')
@@ -213,6 +219,26 @@ class AddListView(View):
             return JsonResponse({'status': 403, 'msg': 'Invalid store'})
 
 
+class UpdateOrder(View):
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(UpdateOrder, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        token = verify_token(request)
+        if not isinstance(token, AccessToken):
+            return JsonResponse({'status': 403, 'msg': token['msg']})
+        if request.user.groups.all()[0].id != 1:
+            return JsonResponse({'status': 200, 'msg': 'Not authorized'})
+        try:
+            user_order = UserOrder.objects.get(pk=request.POST.get('user_order'), store=Shop.objects.get(pk=request.POST.get('store_id')))
+            user_order.order_status = request.POST.get('order_status')
+            user_order.save()
+            return JsonResponse({'status': 200, 'msg': 'Order updated successfully'})
+        except ObjectDoesNotExist:
+            return JsonResponse({'status': 'Invalid order'})
+
+
 class AllOrders(View):
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
@@ -236,6 +262,7 @@ class AllOrders(View):
         for i in orders:
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
             tmp = {
+                'id': i.id,
                 'user': i.user.first_name,
                 'shop': [
                     {
@@ -249,7 +276,7 @@ class AllOrders(View):
                     }
                 ],
                 'items': list(cart_items),
-                'order_status': 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Reject',
+                'order_status': 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Reject' if i.order_status == 2 else 'Done',
                 'acceptance_type': 'availability',
                 'user_finalised': True,
                 'timestamp': i.timestamp.strftime('%d/%m/%Y %H:%M:%S')
@@ -283,6 +310,7 @@ class ActiveOrders(View):
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(
                 item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
             tmp = {
+                'id': i.id,
                 'user': i.user.first_name,
                 'shop': [
                     {
@@ -296,7 +324,7 @@ class ActiveOrders(View):
                     }
                 ],
                 'items': list(cart_items),
-                'order_status': 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Reject',
+                'order_status': 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Reject' if i.order_status == 2 else 'Done',
                 'acceptance_type': 'availability',
                 'user_finalised': True,
                 'timestamp': i.timestamp.strftime('%d/%m/%Y %H:%M:%S')
@@ -329,6 +357,7 @@ class PastOrders(View):
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(
                 item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
             tmp = {
+                'id': i.id,
                 'user': i.user.first_name,
                 'shop': [
                     {
@@ -349,3 +378,124 @@ class PastOrders(View):
             }
             order_list.append(tmp)
         return JsonResponse({'status': 200, 'data': order_list})
+
+
+class AllShops(View):
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(AllShops, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        token = verify_token(request)
+        if not isinstance(token, AccessToken):
+            return JsonResponse({'status': 403, 'msg': token['msg']})
+        if request.user.groups.all()[0].id == 1:
+            shop = Shop.objects.filter(owner=request.user).order_by('name')
+        elif request.user.groups.all()[0].id == 2:
+            shop = Shop.objects.all().order_by('name')
+        else:
+            return JsonResponse({'status': 403, 'msg': 'Not authorized'})
+        shops = []
+        for i in shop:
+            tmp = {
+                'id': i.id,
+                'name': i.name,
+                'owner': i.owner.first_name,
+                'state': i.state,
+                'city': i.city,
+                'locality': i.locality,
+                'address': i.address,
+                'pin': i.pin
+                }
+            shops.append(tmp)
+        return JsonResponse({'status': 200, 'data': shops})
+
+
+class AvailableOrders(View):
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(AvailableOrders, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        token = verify_token(request)
+        if not isinstance(token, AccessToken):
+            return JsonResponse({'status': 403, 'msg': token['msg']})
+        if request.user.groups.all()[0].id != 2:
+            return JsonResponse({'status': 403, 'msg': 'Not authorized'})
+        try:
+            stores = VolunteerShops.objects.filter(volunteer=request.user).values('shop')
+        except ObjectDoesNotExist:
+            return JsonResponse({'status': 200, 'msg': 'No shop(s) registered'})
+        volunteer_orders = UserOrder.objects.filter(store__in=stores, order_status=5).select_related('store').order_by('timestamp')
+        order_list = []
+        for i in volunteer_orders:
+            cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(
+                item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
+            tmp = {
+                'id': i.id,
+                'user': i.user.first_name,
+                'shop': [
+                    {
+                        'name': i.store.name,
+                        'owner': i.store.owner.first_name,
+                        'state': i.store.state,
+                        'city': i.store.city,
+                        'locality': i.store.locality,
+                        'address': i.store.address,
+                        'pin': i.store.pin
+                    }
+                ],
+                'items': list(cart_items),
+                'order_status': 'Packed',
+                'acceptance_type': 'availability',
+                'user_finalised': True,
+                'timestamp': i.timestamp.strftime('%d/%m/%Y %H:%M:%S')
+            }
+            order_list.append(tmp)
+        return JsonResponse({'status': 200, 'data': order_list})
+
+
+class AcceptOrders(View):
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(AcceptOrders, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        token = verify_token(request)
+        if not isinstance(token, AccessToken):
+            return JsonResponse({'status': 403, 'msg': token['msg']})
+        if request.user.groups.all()[0].id != 2:
+            return JsonResponse({'status': 403, 'msg': 'Not authorized'})
+        try:
+            user_order = UserOrder.objects.get(pk=request.POST.get('user_order'))
+        except ObjectDoesNotExist:
+            return JsonResponse({'status': 200, 'msg': 'Order delivered or invalid'})
+        updated, volunteer_orders = VolunteerOrder.objects.update_or_create(
+            volunteer=request.user,
+            order=user_order
+        )
+        return JsonResponse({'status': 200, 'msg': 'Order accepted'})
+
+
+class CompleteOrder(View):
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(CompleteOrder, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        token = verify_token(request)
+        if not isinstance(token, AccessToken):
+            return JsonResponse({'status': 403, 'msg': token['msg']})
+        if request.user.groups.all()[0].id != 2:
+            return JsonResponse({'status': 403, 'msg': 'Not authorized'})
+        try:
+            user_order = UserOrder.objects.get(pk=request.POST.get('user_order'))
+        except ObjectDoesNotExist:
+            return JsonResponse({'status': 200, 'msg': 'Order delivered or invalid'})
+        try:
+            volunteer_order = VolunteerOrder.objects.get(order=user_order)
+            volunteer_order.status = 1
+            volunteer_order.save()
+            return JsonResponse({'status': 200, 'msg': 'Order delivered successfully'})
+        except ObjectDoesNotExist:
+            return JsonResponse({'status': 200, 'msg': 'Order delivered or invalid'})

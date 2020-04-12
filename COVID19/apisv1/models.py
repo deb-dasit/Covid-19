@@ -45,7 +45,7 @@ class UserOrder(models.Model):
     Order_status: 0: hold
                   1: confirm
                   2: reject
-                  5: done
+                  5: done / packed
     '''
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     store = models.ForeignKey(Shop, on_delete=models.CASCADE)
@@ -102,5 +102,10 @@ class AccessToken(models.Model):
     access_token = models.TextField()
     refresh_token = models.CharField(max_length=255)
     expire_date = models.DateTimeField(default=datetime.datetime.now())
+
+
+class UserDetails(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    address = models.TextField()
 
 

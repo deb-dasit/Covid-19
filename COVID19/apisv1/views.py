@@ -479,6 +479,8 @@ class AvailableOrders(View):
                 order_status = 'Out for delivery' if vol_order.status == 0 else 'Delivered'
             except ObjectDoesNotExist:
                 order_status = 'Hold' if i.order_status == 0 else 'Confirm' if i.order_status == 1 else 'Packed' if i.order_status == 5 else 'Reject'
+            if order_status == 'Delivered':
+                continue
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(
                 item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
             tmp = {

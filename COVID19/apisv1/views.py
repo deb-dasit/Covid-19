@@ -260,11 +260,17 @@ class AllOrders(View):
             orders = UserOrder.objects.filter(pk__in=v_orders)
         order_list = []
         for i in orders:
+            user_address = None
+            try:
+                user_details = UserDetails.objects.get(user=i.user)
+                user_address = user_details.address
+            except ObjectDoesNotExist:
+                pass
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
             tmp = {
                 'id': i.id,
                 'user': i.user.first_name,
-                'user_address': UserDetails.objects.get(user=i.user).address if UserDetails.objects.get(user=i.user) else None,
+                'user_address': user_address,
                 'shop': [
                     {
                         'store_id': i.store.id,
@@ -309,12 +315,18 @@ class ActiveOrders(View):
             orders = UserOrder.objects.filter(pk__in=v_orders)
         order_list = []
         for i in orders:
+            user_address = None
+            try:
+                user_details = UserDetails.objects.get(user=i.user)
+                user_address = user_details.address
+            except ObjectDoesNotExist:
+                pass
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(
                 item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
             tmp = {
                 'id': i.id,
                 'user': i.user.first_name,
-                'user_address': UserDetails.objects.get(user=i.user).address if UserDetails.objects.get(user=i.user) else None,
+                'user_address': user_address,
                 'shop': [
                     {
                         'store_id': i.store.id,
@@ -358,12 +370,18 @@ class PastOrders(View):
             orders = UserOrder.objects.filter(pk__in=v_orders)
         order_list = []
         for i in orders:
+            user_address = None
+            try:
+                user_details = UserDetails.objects.get(user=i.user)
+                user_address = user_details.address
+            except ObjectDoesNotExist:
+                pass
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(
                 item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
             tmp = {
                 'id': i.id,
                 'user': i.user.first_name,
-                'user_address': UserDetails.objects.get(user=i.user).address if UserDetails.objects.get(user=i.user) else None,
+                'user_address': user_address,
                 'shop': [
                     {
                         'store_id': i.store.id,
@@ -435,12 +453,18 @@ class AvailableOrders(View):
         volunteer_orders = UserOrder.objects.filter(store__in=stores, order_status=5).select_related('store').order_by('timestamp')
         order_list = []
         for i in volunteer_orders:
+            user_address = None
+            try:
+                user_details = UserDetails.objects.get(user=i.user)
+                user_address = user_details.address
+            except ObjectDoesNotExist:
+                pass
             cart_items = ItemOrderMap.objects.filter(order=i).annotate(item_name=F('item__item')).annotate(
                 item_quantity=F('item__quantity')).values('item_name', 'item_quantity')
             tmp = {
                 'id': i.id,
                 'user': i.user.first_name,
-                'user_address': UserDetails.objects.get(user=i.user).address if UserDetails.objects.get(user=i.user) else None,
+                'user_address': user_address,
                 'shop': [
                     {
                         'store_id': i.store.id,

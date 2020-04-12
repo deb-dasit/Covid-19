@@ -610,7 +610,8 @@ class Profile(View):
                     'city': i.shop.city,
                     'locality': i.shop.locality,
                     'address': i.shop.address,
-                    'pin': i.shop.pin
+                    'pin': i.shop.pin,
+                    'status': 'Open' if i.shop.status == 1 else 'Closed'
                 }
                 shops.append(tmp)
         try:
